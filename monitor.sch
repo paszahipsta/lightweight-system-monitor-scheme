@@ -1,4 +1,4 @@
-(import spiffy intarweb uri-common shell)
+(import spiffy intarweb uri-common shell srfi-13)
 
 (define (basic-info)
 (capture "uname -a")
@@ -8,13 +8,12 @@
   (capture sensors)
 )
 
-
-
+(define x (list (sensors) (basic-info)))
 
 (define (handle-greeting continue)
   (let* ((uri (request-uri (current-request))))
     (if (equal? (uri-path uri) '(/ "gret"))
-        (send-response status: 'ok body: (sensors) (basic-info) )
+        (send-response status: 'ok body: (string-join x " ") )
 	(continue))))
 
 (vhost-map `(("localhost" . ,handle-greeting)))
