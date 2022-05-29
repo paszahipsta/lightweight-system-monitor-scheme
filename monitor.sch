@@ -1,12 +1,17 @@
 (import spiffy intarweb uri-common shell srfi-13)
 
 (define (basic-info)
-(capture "uname -a")
+(string-join (list "Operating system:" (capture "uname -o")))
 )
 
+
+
 (define (sensors)
-  (capture sensors)
+ (substring? (capture sensors) "temp1")
 )
+
+
+
 
 (define x (list (sensors) (basic-info)))
 
@@ -16,6 +21,6 @@
 
 (vhost-map `(("localhost" . ,handle-greeting)))
 
-
+(sensors)
 (server-port 8080)
 (start-server)
