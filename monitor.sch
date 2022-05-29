@@ -12,9 +12,7 @@
 
 (define (handle-greeting continue)
   (let* ((uri (request-uri (current-request))))
-    (if (equal? (uri-path uri) '(/ "gret"))
-        (send-response status: 'ok body: (string-join x " ") )
-	(send-response status: 'ok body: (string-join x " ")))))
+	(send-response status: 'ok body: (string-join x " "))))
 
 (vhost-map `(("localhost" . ,handle-greeting)))
 
