@@ -26,8 +26,8 @@
 
 (define (create-output i titles divided-list)
   (if (< i 5)
-  (string-join (list (list-ref titles i) (list-ref divided-list i) "</br>" (create-output (+ 1 i) titles divided-list)) " ")
-  ""
+  (string-join (list (list-ref titles i) (list-ref divided-list i) "<li>" (create-output (+ 1 i) titles divided-list)) " ")
+  "Health good"
   )
 
 )
@@ -60,7 +60,7 @@
     ((equal? type `temperature) (string-join (list "<p>" "Temperature:" (temp-info) "°C" "</p>") " "))
     ((equal? type `os ) (string-join (list "<p>" "Operating System:" (system-info) "</p>") " "))
     ((equal? type `user) (string-join (list "<p>User:" (user-info) "</p></br>") " "))
-    ((equal? type `RAM) (memory-info))
+    ((equal? type `RAM) (string-join (list "<p>" (memory-info) "</p>") " "))
     (else "error"))
     "invalid type"))
 
