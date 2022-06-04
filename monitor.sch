@@ -1,4 +1,4 @@
-(import spiffy intarweb uri-common shell srfi-152)
+(import spiffy intarweb uri-common shell srfi-152 srfi-1)
 
 (define (basic-info)
 (string-join (list "Operating system:" (capture "uname -o")))
@@ -13,9 +13,29 @@
     ((equal? command `poweroff) (capture "sudo shutdown -h now"))
     ((equal? command `reboot) (capture "sudo reboot"))
     ((equal? command `user) (capture whoami))
+    ((equal? command `RAM) (capture "procinfo -H GiB | grep RAM"))
     (else "error"))
     "invalid type"))
 
+
+(define (memory-info)
+(define divided (string-split (get-output `RAM) " "))
+(define titles (list "Memory" "Total:" "Used:" "Free:" "Buffers:"))
+(define (clear-empty div)
+  (delete " " (delete "" divided)))
+
+(define (create-output i titles divided-list)
+  (if (< i 5)
+  (string-join (list (list-ref titles i) (list-ref divided-list i) "</br>" (create-output (+ 1 i) titles divided-list)) " ")
+  ""
+  )
+
+)
+
+(create-output 0 titles (clear-empty divided))
+
+
+)
 
 (define (system-info)
 (get-output `uname)
@@ -37,9 +57,10 @@
 (define (get-content type)
   (if (symbol? type)
   (cond
-    ((equal? type `temperature) (string-join (list "<h6>" "Temperature:" (temp-info) "°C" "</h6>") " "))
-    ((equal? type `os ) (string-join (list "<h6>" "Operating System:" (system-info) "</h6>") " "))
-    ((equal? type `user) (string-join (list "User:" (user-info)) " "))
+    ((equal? type `temperature) (string-join (list "<p>" "Temperature:" (temp-info) "°C" "</p>") " "))
+    ((equal? type `os ) (string-join (list "<p>" "Operating System:" (system-info) "</p>") " "))
+    ((equal? type `user) (string-join (list "<p>User:" (user-info) "</p></br>") " "))
+    ((equal? type `RAM) (memory-info))
     (else "error"))
     "invalid type"))
 
@@ -50,6 +71,7 @@
   (get-content `temperature)
   (get-content `os)
   (get-content `user)
+  (get-content `RAM)
   "<button onclick=\"window.location.href='/poweroff'\">Power off</button>" 
   "<button onclick=\"window.location.href='/reboot'\">Reboot</button>"
   
@@ -71,6 +93,7 @@
   (else (send-response status: `ok body: (get-mainpage))))))
 
 (vhost-map `(("192.168.222.84" . ,handle-greeting)))
+
 
 (server-port 8080)
 (start-server)
