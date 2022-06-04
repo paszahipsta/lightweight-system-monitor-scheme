@@ -10,13 +10,19 @@
   (cond
     ((equal? command `sensors) (capture "sensors"))
     ((equal? command `uname) (capture "uname -o"))
+    ((equal? command `poweroff) (capture "sudo shutdown -h now"))
+    ((equal? command `reboot) (capture "sudo reboot"))
     (else "error"))
     "invalid type"))
 
 
+(define (system-info)
+(get-output `uname)
+)
+
 (define (temp-info)
   (define index-x (string-contains (get-output `sensors) "+"))
-  (define index-z (string-contains (get-output `sensors) "rpi_volt"))
+  (define index-z (string-contains (get-output `sensors) "°C"))
   (define cut-string (string-replace (get-output `sensors) "" 0 index-x))
   (string-trim-both 
     (string-replace 
@@ -24,23 +30,34 @@
     )
   )
 
+
 (define (get-content type)
   (if (symbol? type)
   (cond
-    ((equal? type `temperature) (string-join (list "Temperature:" (temp-info)) "     " ))
-    ((equal? type `uname ) (capture "uname -o"))
+    ((equal? type `temperature) (string-join (list "<h6>" "Temperature:" (temp-info) "°C" "</h6>") " "))
+    ((equal? type `os ) (string-join (list "<h6>" "Operating System:" (system-info) "</h6>") " "))
     (else "error"))
     "invalid type"))
 
-   
+
+(define (get-mainpage)
+(string-join (list "<head><meta charset=\"utf-8\"></head>"(get-content `temperature) (get-content `os) "<button onclick=\"window.location.href='/poweroff'\">Power off</button>" "<button onclick=\"window.location.href='/reboot'\">Reboot</button>")))   
  
  
- (define (handle-greeting continue)
+(define (handle-greeting1 continue)
   (let* ((uri (request-uri (current-request))))
-	(send-response status: 'ok body: (get-content `temperature))))
+  (if (equal? (uri-path uri) '(/ "poweroff"))
+	(send-response status: 'ok body: (capture "sudo shutdown -h now"))
+	(send-response status: 'ok body: (get-mainpage)))))
 
-(vhost-map `(("localhost" . ,handle-greeting)))
+(define (handle-greeting continue)
+  (let* ((uri (request-uri (current-request))))
+  (cond 
+  ((equal? (uri-path uri) '(/ "poweroff")) (get-output `poweroff))
+  ((equal? (uri-path uri) '(/ "reboot")) (get-output `reboot))
+  (else (send-response status: `ok body: (get-mainpage))))))
 
-(display (get-content `temperature))
+(vhost-map `(("192.168.222.84" . ,handle-greeting)))
+
 (server-port 8080)
 (start-server)
