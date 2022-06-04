@@ -12,6 +12,7 @@
     ((equal? command `uname) (capture "uname -o"))
     ((equal? command `poweroff) (capture "sudo shutdown -h now"))
     ((equal? command `reboot) (capture "sudo reboot"))
+    ((equal? command `user) (capture whoami))
     (else "error"))
     "invalid type"))
 
@@ -29,19 +30,31 @@
       cut-string "" (- index-z index-x) (string-length cut-string))
     )
   )
-
+(define (user-info)
+(get-output `user)
+)
 
 (define (get-content type)
   (if (symbol? type)
   (cond
     ((equal? type `temperature) (string-join (list "<h6>" "Temperature:" (temp-info) "°C" "</h6>") " "))
     ((equal? type `os ) (string-join (list "<h6>" "Operating System:" (system-info) "</h6>") " "))
+    ((equal? type `user) (string-join (list "User:" (user-info)) " "))
     (else "error"))
     "invalid type"))
 
 
 (define (get-mainpage)
-(string-join (list "<head><meta charset=\"utf-8\"></head>"(get-content `temperature) (get-content `os) "<button onclick=\"window.location.href='/poweroff'\">Power off</button>" "<button onclick=\"window.location.href='/reboot'\">Reboot</button>")))   
+(string-join (list 
+  "<head><meta charset=\"utf-8\"></head>"
+  (get-content `temperature)
+  (get-content `os)
+  (get-content `user)
+  "<button onclick=\"window.location.href='/poweroff'\">Power off</button>" 
+  "<button onclick=\"window.location.href='/reboot'\">Reboot</button>"
+  
+  
+  )))   
  
  
 (define (handle-greeting1 continue)
