@@ -1,10 +1,20 @@
 (import spiffy intarweb uri-common shell srfi-152 srfi-1)
 
-
 (define (count-elements list)
 (if (null? list)
       0
       (+ 1 (count-elements (cdr list)))))
+
+(define (reload-page) 
+"
+<script>
+      function timeRefresh(time) {
+        setTimeout(\"location.reload(true);\", time);
+      }
+timeRefresh(15000)    
+</script>
+"
+)
 
 
 
@@ -18,6 +28,7 @@
     ((equal? command `user) (capture whoami))
     ((equal? command `RAM) (capture "procinfo -H GiB | grep RAM"))
     ((equal? command `processor) (capture "procinfo | grep -E '(user|system|IOwait|idle)'"))
+    ((equal? command `uptime) (capture "uptime -p"))
     (else "error"))
     "invalid type"))
 
@@ -29,21 +40,20 @@
   (define titles (list "Memory" "Total:" "Used:" "Free:" "Buffers:"))
   (define (create-output i titles divided-list)
     (if (< i (count-elements titles))
-    (string-join (list (list-ref titles i) (list-ref divided-list i) "<li>" (create-output (+ 1 i) titles divided-list)) " ")
-    "Health good"
+    (string-join (list "<li>" (list-ref titles i) (list-ref divided-list i) "</li>" (create-output (+ 1 i) titles divided-list)) " ")
+    ""
     )
   )
 
-  (create-output 0 titles (clear-empty divided))
+  (create-output 1 titles (clear-empty divided))
 )
 
 (define (processor-info)
-  (define titles (list "User" "System" "IOwait" "idle"))
+  (define titles (list "User:" "System:" "IOwait:" "Idle:"))
   (define divided (string-split (get-output `processor) " "))
-  (display (delete ":" (clear-empty divided)))  
   (define (create-output i a titles divided-list)
   (if (< i (count-elements titles))
-  (string-join (list (list-ref titles i) (list-ref divided-list a) (create-output (+ 1 i) (+ a 6) titles divided-list)) " ")
+  (string-join (list "<li>" (list-ref titles i) (list-ref divided-list a) "</li>" (create-output (+ 1 i) (+ a 6) titles divided-list)) " ")
   " " 
   )
   )
@@ -67,14 +77,19 @@
 (get-output `user)
 )
 
+(define (uptime-info)
+(get-output `uptime)
+)
+
 (define (get-content type)
   (if (symbol? type)
   (cond
-    ((equal? type `temperature) (string-join (list "<p>" "Temperature:" (temp-info) "°C" "</p>") " "))
-    ((equal? type `os ) (string-join (list "<p>" "Operating System:" (system-info) "</p>") " "))
-    ((equal? type `user) (string-join (list "<p>User:" (user-info) "</p>") " "))
-    ((equal? type `RAM) (string-join (list "<p>" (memory-info) "</p>") " "))
-    ((equal? type `processor) (string-join (list "<p>" (processor-info) "</p>") " "))
+    ((equal? type `temperature) (string-join (list "<p>" "<b>Temperature:</b>" (temp-info) "°C" "</p>") " "))
+    ((equal? type `os ) (string-join (list "<p>" "<b>Operating System:</b>" (system-info) "</p>") " "))
+    ((equal? type `user) (string-join (list "<p><b>User:</b>" (user-info) "</p>") " "))
+    ((equal? type `RAM) (string-join (list "<p><b>RAM Memory:</b></p>" (memory-info)) " "))
+    ((equal? type `processor) (string-join (list "<p><b>Processor Usage:</b></p>" (processor-info)) " "))
+    ((equal? type `uptime) (string-join (list "<b>The device is" (uptime-info) "</b></br></br>") " "))
     (else "error"))
     "invalid type"))
 
@@ -87,8 +102,10 @@
   (get-content `RAM)
   (get-content `processor)
   (get-content `temperature)
+  (get-content `uptime)
   "<button onclick=\"window.location.href='/poweroff'\">Power off</button>" 
   "<button onclick=\"window.location.href='/reboot'\">Reboot</button>"  
+  (reload-page)
   )))   
  
  
@@ -102,6 +119,5 @@
 (vhost-map `(("192.168.222.84" . ,handle-greeting)))
 
 
-#(processor-info)
 (server-port 8080)
 (start-server)
