@@ -22,7 +22,7 @@
     ((equal? command `uname) (capture "uname -o"))
     ((equal? command `poweroff) (capture "sudo shutdown -h now"))
     ((equal? command `reboot) (capture "sudo reboot"))
-    ((equal? command `user) (capture whoami))
+    ((equal? command `user) (capture "whoami"))
     ((equal? command `RAM) (capture "procinfo -H GiB | grep RAM"))
     ((equal? command `processor) (capture "procinfo | grep -E '(user|system|IOwait|idle)'"))
     ((equal? command `uptime) (capture "uptime -p"))
