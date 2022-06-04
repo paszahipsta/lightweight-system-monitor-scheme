@@ -25,7 +25,7 @@ sudo apt install libchicken11 libchicken-dev chicken-bin
 2. Go to the directory of cloned repository and install eggs dependencies
 ```
 cd system-monitor-lisp
-chicken-install -from-list -sudo ./install.txt
+chicken-install -sudo -from-list ./install.txt
 ```
 3. To compile the source code and run program immediately you can use prepared makefile
 ```
@@ -37,7 +37,7 @@ csc monitor.sch
 ```
 4. Done! The monitor binary should appear in current directory!
 
-## Use instruction
+## Use instructions
 
 To access the HTTP monitor, check the IP of your Raspberry Pi and try reaching it through browser
 ```
