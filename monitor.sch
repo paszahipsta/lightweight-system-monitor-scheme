@@ -1,23 +1,20 @@
 (import spiffy intarweb uri-common shell srfi-152 srfi-1)
 
+;;; General use functions ;;;
+
+;Count elements in the given list
 (define (count-elements list)
 (if (null? list)
       0
       (+ 1 (count-elements (cdr list)))))
 
-(define (reload-page) 
-"
-<script>
-      function timeRefresh(time) {
-        setTimeout(\"location.reload(true);\", time);
-      }
-timeRefresh(15000)    
-</script>
-"
-)
+; Clean the list from spaces and empty signs
+(define (clear-empty div)
+    (delete " " (delete "" div)))
 
+;;; End of general use functions ;;; 
 
-
+; Runs shell commands to retrieve system information
 (define (get-output command)
   (if (symbol? command)
   (cond
@@ -32,9 +29,9 @@ timeRefresh(15000)
     (else "error"))
     "invalid type"))
 
-(define (clear-empty div)
-    (delete " " (delete "" div)))
 
+; Retrieve information about RAM memory
+; from standard output and style it for HTML
 (define (memory-info)
   (define divided (string-split (get-output `RAM) " "))
   (define titles (list "Memory" "Total:" "Used:" "Free:" "Buffers:"))
@@ -44,10 +41,11 @@ timeRefresh(15000)
     ""
     )
   )
-
   (create-output 1 titles (clear-empty divided))
 )
 
+; Retrieve information about processor
+; from standard output and style it for HTML
 (define (processor-info)
   (define titles (list "User:" "System:" "IOwait:" "Idle:"))
   (define divided (string-split (get-output `processor) " "))
@@ -60,10 +58,14 @@ timeRefresh(15000)
   (create-output 0 2 titles (delete ":" (clear-empty divided)))
 )
 
+; Retrieve information about operating system
+; from standard output and style it for HTML
 (define (system-info)
 (get-output `uname)
 )
 
+; Retrieve information about temperature
+; from standard output and style it for HTML
 (define (temp-info)
   (define index-x (string-contains (get-output `sensors) "+"))
   (define index-z (string-contains (get-output `sensors) "°C"))
@@ -73,14 +75,20 @@ timeRefresh(15000)
       cut-string "" (- index-z index-x) (string-length cut-string))
     )
   )
+
+; Retrieve information about user 
+; from standard output and style it for HTML
 (define (user-info)
 (get-output `user)
 )
 
+; Retrieve information about uptime 
+; from standard output and style it for HTML
 (define (uptime-info)
 (get-output `uptime)
 )
 
+; Styles the content of each information to be more readable
 (define (get-content type)
   (if (symbol? type)
   (cond
@@ -94,6 +102,29 @@ timeRefresh(15000)
     "invalid type"))
 
 
+; Part of HTML to add javascript, which will reload page every 15 seconds
+(define (reload-page) 
+"<script>
+      function timeRefresh(time) {
+        setTimeout(\"location.reload(true);\", time);
+      }
+timeRefresh(15000)    
+</script>
+"
+)
+
+; Part of HTML to add interactive buttons for rebooting and switching off device
+(define (button type)
+(if (symbol? type)
+  (cond
+    ((equal? type `poweroff) "<button onclick=\"window.location.href='/poweroff'\">Poweroff</button>")
+    ((equal? type `reboot) "<button onclick=\"window.location.href='/reboot'\">Reboot</button>")
+    (else "bad type"))
+  "error"
+  ))
+
+; Building a HTML document for whole system monitor
+; Returns the HTML formatted string
 (define (get-mainpage)
 (string-join (list 
   "<head><meta charset=\"utf-8\"></head>"
@@ -103,21 +134,23 @@ timeRefresh(15000)
   (get-content `processor)
   (get-content `temperature)
   (get-content `uptime)
-  "<button onclick=\"window.location.href='/poweroff'\">Power off</button>" 
-  "<button onclick=\"window.location.href='/reboot'\">Reboot</button>"  
+  (button `poweroff)
+  (button `reboot)
   (reload-page)
   )))   
  
- 
-(define (handle-greeting continue)
+; Handle all incoming requests
+(define (handle-request continue)
   (let* ((uri (request-uri (current-request))))
   (cond 
   ((equal? (uri-path uri) '(/ "poweroff")) (get-output `poweroff))
   ((equal? (uri-path uri) '(/ "reboot")) (get-output `reboot))
   (else (send-response status: `ok body: (get-mainpage))))))
 
-(vhost-map `(("192.168.222.84" . ,handle-greeting)))
 
+; Map server to IP and point to request handler
+(vhost-map `(("192.168.222.84" . ,handle-request)))
 
-(server-port 8080)
+; Select the port and start server
+(server-port 80)
 (start-server)
