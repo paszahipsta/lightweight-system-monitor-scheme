@@ -24,7 +24,7 @@ sudo apt install libchicken11 libchicken-dev chicken-bin
 ```
 2. Go to the directory of cloned repository and install eggs dependencies
 ```
-cd system-monitor-lisp
+cd lightweight-system-monitor-scheme/
 chicken-install -sudo -from-list ./install.txt
 ```
 3. To compile the source code and run program immediately you can use prepared makefile
